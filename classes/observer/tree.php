@@ -116,7 +116,6 @@ class Observer_Tree extends \Orm\Observer
 				}
 				break;
 		}
-		\Log::error($sql , "SQL");
 		return $sql;
 	}
 
