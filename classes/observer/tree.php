@@ -40,12 +40,12 @@ class Observer_Tree extends \Orm\Observer
 	protected function _createSql($type, $nodeValue = array())
 	{
 		$sql = '';
-		$left			= \DB::quote_identifier($this->_property['left']);
-		$right			= \DB::quote_identifier($this->_property['right']);
-		$parent_id		= \DB::quote_identifier($this->_property['parent_id']);
-		$table			= isset($nodeValue['table'])			? \DB::quote_table($nodeValue['table'])		: NULL;
+		$left		= \DB::quote_identifier($this->_property['left']);
+		$right		= \DB::quote_identifier($this->_property['right']);
+		$parent_id	= \DB::quote_identifier($this->_property['parent_id']);
+		$table		= isset($nodeValue['table'])		? \DB::quote_table($nodeValue['table'])	: NULL;
 		$parent_right	= isset($nodeValue['parent_right'])	? (int)$nodeValue['parent_right']	: NULL;
-		$parent_left	= isset($nodeValue['parent_left'])		? (int)$nodeValue['parent_left']		: NULL;
+		$parent_left	= isset($nodeValue['parent_left'])	? (int)$nodeValue['parent_left']	: NULL;
 		$original_left	= isset($nodeValue['original_left'])	? (int)$nodeValue['original_left']	: NULL;
 		$original_right	= isset($nodeValue['original_right'])	? (int)$nodeValue['original_right']	: NULL;
 
