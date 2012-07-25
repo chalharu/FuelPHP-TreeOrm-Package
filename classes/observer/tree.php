@@ -125,7 +125,7 @@ class Observer_Tree extends \Orm\Observer
 			// parent_idがセットされている
 			$parentNode = $this->getParentNode($obj);
 			if(!$parentNode)
-				throw new FuelException();
+				throw new \FuelException('Parent id is not found.');
 			$table = $this->getTable($obj);
 			\DB::query($this->_createSql('insert',array('table' => $table, 'parent_right' => $parentNode{$this->_property['right']})))->execute();
 			$obj->{$this->_property['left']} = $parentNode{$this->_property['right']};
@@ -133,7 +133,7 @@ class Observer_Tree extends \Orm\Observer
 		} else {
 			// parent_idがセットされていない
 			if(!$this->isTableEmpty($obj))
-				throw new FuelException();
+				throw new \FuelException();
 			$obj->{$this->_property['left']} = 1;
 			$obj->{$this->_property['right']} = 2;
 			$obj->{$this->_property['parent_id']} = 0;
@@ -149,7 +149,7 @@ class Observer_Tree extends \Orm\Observer
 			if($oldNode{$this->_property['parent_id']} != $obj->{$this->_property['parent_id']}){
 				$parentNode = $this->getParentNode($obj);
 				if(!$parentNode)
-					throw new FuelException();
+					throw new \FuelException();
 				\DB::query($this->_createSql('update',array('table' => $table, 'parent_right' => $parentNode{$this->_property['right']},
 					 'parent_left' => $parentNode{$this->_property['left']}, 'original_right' => $oldNode{$this->_property['right']},
 					 'original_left' => $oldNode{$this->_property['left']})))->execute();
