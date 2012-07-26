@@ -32,6 +32,33 @@ class Tree
 		return $this->_table;
 	}
 	
+	public function children($id = null, $direct = false, $orderColumn = null, $orderDirection = null, $limit = null) {
+		if (is_array($id)) {
+			extract (array_merge(array('id' => null), $id));
+		}
+		if (!$number) {
+			return false;
+		}
+		if (empty ($id)) {
+			$id = $this->obj->id;
+		}
+		if (!$orderColumn) {
+			$orderColumn = 'lft';
+		}
+		if (!$orderDirection) {
+			$orderDirection = 'ASC';
+		}
+		if ($direct) {
+			return \DB::select()->from($this->getTable())->where('parent_id',$id)->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+		}
+		$node = \DB::select('id','lft','rght')->from($this->getTable())->where('id',$id)->execute()->current();
+		if(!$node) {
+			return false;
+		}
+		return \DB::select()->from($this->getTable())->where('lft', '>',$node['lft'])->where('rght', '<',$node['rght'])
+			->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+	}
+	
 	/*
 	 * - 'id' id of record to use as top node for reordering
 	 * - 'field' Which field to use in reordering defaults to id
@@ -143,7 +170,9 @@ class Tree
 			return false;
 		}
 		
-		$moveToNode = \DB::select()->from($this->getTable())->where('rght',\DB::expr('(SELECT MAX(rght) FROM ' . $this->getTable() . ' WHERE rght < ' . $node['lft'] . ' AND lft > ' . $parentNode['lft'] . ')'))->execute()->current();
+		$moveToNode = \DB::select()->from($this->getTable())
+			->where('rght',\DB::expr('(SELECT MAX(rght) FROM ' . $this->getTable() . ' WHERE rght < ' . $node['lft'] . ' AND lft > ' . $parentNode['lft'] . ')'))
+			->execute()->current();
 		if(!$moveToNode) {
 			return false;
 		}
