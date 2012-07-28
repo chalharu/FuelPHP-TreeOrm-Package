@@ -147,8 +147,24 @@ class Tree
 	 * - 'field' Which field to use in reordering defaults to id
 	 * - 'order' Direction to order either DESC or ASC (defaults to ASC)
 	 */
-	public function reorder($options = array()) {
-		$options = array_merge(array('id' => null, 'field' => 'id', 'order' => 'ASC'), $options);
+	public function reorder($id = null, $field = 'id', $order = 'ASC') {
+		if (is_array($id)) {
+			extract (array_merge(array('id' => null, 'field' => 'id', 'order' => 'ASC'), $id));
+		}
+		if ($id === null) {
+			$id = $this->obj->id;
+		}
+		
+		$nodes = $this->children($id, true, $field, $order);
+		if ($nodes) {
+			foreach ($nodes as $node) {
+				\Debug::dump($node);
+				$this->moveDown($node['id'], true);
+				if ($node['lft'] != $node['rght'] - 1) {
+					$this->reorder($node['id'], $field, $order);
+				}
+			}
+		}
 	}
 
 	public function change($id1 = null, $id2 = null) {
@@ -228,7 +244,7 @@ class Tree
 			$number--;
 		}
 		if ($number) {
-			$this->moveUp($Model, $id, $number);
+			$this->moveDown($id, $number);
 		}
 	}
 
@@ -266,7 +282,7 @@ class Tree
 			$number--;
 		}
 		if ($number) {
-			$this->moveUp($Model, $id, $number);
+			$this->moveUp($id, $number);
 		}
 	}
 }
