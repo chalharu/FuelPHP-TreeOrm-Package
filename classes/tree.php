@@ -4,7 +4,8 @@ namespace TreeOrm;
 class Tree
 {
 	protected $obj;
-	protected $table;
+	protected $_table;
+	protected $_property;
 	
 	public static function forge($model = null)
 	{
@@ -21,7 +22,7 @@ class Tree
 	public function __construct(\Orm\Model $obj)
 	{
 		$this->obj = $obj;
-		$this->table = $this->_table = call_user_func(get_class($obj).'::table');
+		$this->_table = call_user_func(get_class($obj).'::table');
 	}
 	
 	protected function getTable()
