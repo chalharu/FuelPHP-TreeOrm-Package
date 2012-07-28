@@ -52,8 +52,10 @@ class Tree
 		if (is_array($id)) {
 			extract (array_merge(array('id' => null), $id));
 		}
-		if (empty ($id)) {
+		if ($id === null) {
 			$id = $this->obj->id;
+		} elseif(!$id) {
+			$id = null;
 		}
 		if (!$orderColumn) {
 			$orderColumn = 'lft';
@@ -62,10 +64,24 @@ class Tree
 			$orderDirection = 'ASC';
 		}
 		if ($direct) {
+			if($id === null) {
+				if($limit)
+					return \DB::select()->from($this->getTable())->where('parent_id',null)->or_where('parent_id',0)
+						->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+				else
+					return \DB::select()->from($this->getTable())->where('parent_id',null)->or_where('parent_id',0)
+						->order_by($orderColumn, $orderDirection)->execute();
+			}
 			if($limit)
 				return \DB::select()->from($this->getTable())->where('parent_id',$id)->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
 			else
 				return \DB::select()->from($this->getTable())->where('parent_id',$id)->order_by($orderColumn, $orderDirection)->execute();
+		}
+		if($id === null) {
+			if($limit)
+				return \DB::select()->from($this->getTable())->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+			else
+				return \DB::select()->from($this->getTable())->order_by($orderColumn, $orderDirection)->execute();
 		}
 		$node = \DB::select('id','lft','rght')->from($this->getTable())->where('id',$id)->execute()->current();
 		if(!$node) {
@@ -83,11 +99,22 @@ class Tree
 		if (is_array($id)) {
 			extract (array_merge(array('id' => null), $id));
 		}
-		if (empty ($id)) {
+		if ($id === null) {
 			$id = $this->obj->id;
+		} elseif(!$id) {
+			$id = null;
 		}
 		if ($direct) {
+			if($id === null) {
+				$result = \DB::select(\DB::expr('COUNT(id)'))->from($this->getTable())
+					->where('parent_id',null)->or_where('parent_id',0)->execute()->current();
+				return (int)$result['COUNT(id)'];
+			}
 			$result = \DB::select(\DB::expr('COUNT(id)'))->from($this->getTable())->where('parent_id',$id)->execute()->current();
+			return (int)$result['COUNT(id)'];
+		}
+		if($id === null) {
+			$result = \DB::select(\DB::expr('COUNT(id)'))->from($this->getTable())->execute()->current();
 			return (int)$result['COUNT(id)'];
 		}
 		$node = \DB::select('id','lft','rght')->from($this->getTable())->where('id',$id)->execute()->current();
