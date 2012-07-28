@@ -11,7 +11,7 @@ class Observer_Tree extends \Orm\Observer
 	public function __construct($class)
 	{
 		$props = $class::observers(get_class($this));
-		$this->_property = isset($props['property']) && is_array($props['property']) ? array_merge($props['property'],static::$property) : static::$property ;
+		$this->_property = isset($props['property']) && is_array($props['property']) ? array_merge(static::$property,$props['property']) : static::$property ;
 	}
 
 	protected function getTable(\Orm\Model $obj)
