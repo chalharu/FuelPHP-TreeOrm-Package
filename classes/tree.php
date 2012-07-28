@@ -3,8 +3,6 @@ namespace TreeOrm;
 
 class Tree
 {
-	public static $property = array( 'left' => 'lft', 'right' => 'rght', 'parent_id' => 'parent_id', 'id' => 'id');
-
 	protected $obj;
 	protected $table;
 	
@@ -23,12 +21,11 @@ class Tree
 	public function __construct(\Orm\Model $obj)
 	{
 		$this->obj = $obj;
-		$this->table = get_class($obj).'::table';
+		$this->table = $this->_table = call_user_func(get_class($obj).'::table');
 	}
 	
 	protected function getTable()
 	{
-		$this->_table = call_user_func(get_class($this->obj).'::table');
 		return $this->_table;
 	}
 	
@@ -158,11 +155,8 @@ class Tree
 		$nodes = $this->children($id, true, $field, $order);
 		if ($nodes) {
 			foreach ($nodes as $node) {
-				\Debug::dump($node);
 				$this->moveDown($node['id'], true);
-				if ($node['lft'] != $node['rght'] - 1) {
-					$this->reorder($node['id'], $field, $order);
-				}
+				$this->reorder($node['id'], $field, $order);
 			}
 		}
 	}
@@ -227,7 +221,11 @@ class Tree
 		if(!$node) {
 			return false;
 		}
-		if(!$node['rght']) {
+		if(!$node['rght'] && ($node['parent_id'] == null || $node['parent_id'] == 0)) {
+			$updateSet = array();
+			$updateSet['lft'] = ($this->_getMin() ?: 2) - 1;
+			$updateSet['rght'] = ($this->_getMax() ?: 1) + 1;
+			\DB::update($this->getTable())->set($updateSet)->where('id', $node['id'])->execute();
 			return false;
 		}
 		
@@ -236,10 +234,21 @@ class Tree
 			return false;
 		}
 		if(!$parentNode['rght']) {
+			$this->moveDown($parentNode['id'], true);
+			$parentNode = \DB::select('id','lft','rght','parent_id')->from($this->getTable())->where('id',$node['parent_id'])->execute()->current();
+		}
+		if(!$node['rght']){
+			$this->_insertLeafSpace($parentNode['rght']);
+			$updateSet = array();
+			$updateSet['lft'] = $parentNode['rght'];
+			$updateSet['rght'] = $parentNode['rght'] + 1;
+			\DB::update($this->getTable())->set($updateSet)->where('id', $node['id'])->execute();
 			return false;
 		}
 		
-		$moveToNode = \DB::select()->from($this->getTable())->where('lft',\DB::expr('(SELECT MIN(lft) FROM ' . $this->getTable() . ' WHERE lft > ' . $node['rght'] . ' AND rght < ' . $parentNode['rght'] . ')'))->execute()->current();
+		$moveToNode = \DB::select()->from($this->getTable())
+			->where('lft',\DB::expr('(SELECT MIN(lft) FROM ' . $this->getTable() . ' WHERE lft > ' . $node['rght'] . ' AND rght < ' . $parentNode['rght'] . ')'))
+			->execute()->current();
 		if(!$moveToNode) {
 			return false;
 		}
@@ -269,7 +278,11 @@ class Tree
 		if(!$node) {
 			return false;
 		}
-		if(!$node['lft']) {
+		if(!$node['lft'] && ($node['parent_id'] == null || $node['parent_id'] == 0)) {
+			$updateSet = array();
+			$updateSet['lft'] = ($this->_getMin() ?: 2) - 1;
+			$updateSet['rght'] = ($this->_getMax() ?: 1) + 1;
+			\DB::update($this->getTable())->set($updateSet)->where('id', $node['id'])->execute();
 			return false;
 		}
 		
@@ -278,6 +291,15 @@ class Tree
 			return false;
 		}
 		if(!$parentNode['lft']) {
+			$this->moveUp($parentNode['id'], true);
+			$parentNode = \DB::select('id','lft','rght','parent_id')->from($this->getTable())->where('id',$node['parent_id'])->execute()->current();
+		}
+		if(!$node['rght']){
+			$this->_insertLeafSpace($parentNode['lft'] + 1);
+			$updateSet = array();
+			$updateSet['lft'] = $parentNode['lft'] + 1;
+			$updateSet['rght'] = $parentNode['lft'] + 2;
+			\DB::update($this->getTable())->set($updateSet)->where('id', $node['id'])->execute();
 			return false;
 		}
 		
@@ -296,5 +318,23 @@ class Tree
 		if ($number) {
 			$this->moveUp($id, $number);
 		}
+	}
+
+	protected function _insertLeafSpace($parentRight)
+	{
+		$sql = 'UPDATE ' . $this->getTable() . ' SET lft = CASE WHEN lft > ' . $parentRight .
+			' THEN lft + 2 ELSE lft END, rght = CASE WHEN rght >= ' . $parentRight .
+			' THEN rght + 2 ELSE rght END WHERE rght >= ' . $parentRight;
+		\DB::query($sql)->execute();
+	}
+
+	protected function _getMax() {
+		$result = \DB::select(\DB::expr('max(rght)'))->from($this->getTable())->execute()->current();
+		return (empty($result['rght'])) ? 0 : $result['rght'];
+	}
+
+	protected function _getMin() {
+		$result = \DB::select(\DB::expr('min(lft)'))->from($this->getTable())->execute()->current();
+		return (empty($result['lft'])) ? 0 : $result['lft'];
 	}
 }
