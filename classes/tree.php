@@ -3,7 +3,7 @@ namespace TreeOrm;
 
 class Tree
 {
-	protected $obj;
+	protected $_obj;
 	protected $_table;
 	protected $_property;
 	public static $property = array( 'left' => 'lft', 'right' => 'rght', 'parent_id' => 'parent_id', 'id' => 'id');
@@ -22,7 +22,7 @@ class Tree
 	
 	public function __construct(\Orm\Model $obj)
 	{
-		$this->obj = $obj;
+		$this->_obj = $obj;
 		$this->_table = call_user_func(get_class($obj).'::table');
 		$props = call_user_func(get_class($obj) . '::observers', 'TreeOrm\\Observer_Tree');
 		$this->_property = isset($props['property']) && is_array($props['property']) ? array_merge(static::$property, $props['property']) : static::$property ;
@@ -39,7 +39,7 @@ class Tree
 			extract (array_merge(array($prop_id => null), $id));
 		}
 		if (empty ($id)) {
-			$id = $this->obj->id;
+			$id = $this->_obj->id;
 		}
 		
 		$node = \DB::select($prop_parent_id)->from($this->getTable())->where($prop_id,$id)->execute()->current();
@@ -57,7 +57,7 @@ class Tree
 			extract (array_merge(array($prop_id => null), $id));
 		}
 		if ($id === null) {
-			$id = $this->obj->id;
+			$id = $this->_obj->id;
 		} elseif(!$id) {
 			$id = null;
 		}
@@ -105,7 +105,7 @@ class Tree
 			extract (array_merge(array($prop_id => null), $id));
 		}
 		if ($id === null) {
-			$id = $this->obj->id;
+			$id = $this->_obj->id;
 		} elseif(!$id) {
 			$id = null;
 		}
@@ -137,7 +137,7 @@ class Tree
 			extract (array_merge(array($prop_id => null), $id));
 		}
 		if (empty ($id)) {
-			$id = $this->obj->id;
+			$id = $this->_obj->id;
 		}
 
 		$node = \DB::select($prop_id,$prop_left,$prop_right)->from($this->getTable())->where($prop_id,$id)->execute()->current();
@@ -162,7 +162,7 @@ class Tree
 			extract (array_merge(array($prop_id => null, 'field' => $prop_id, 'order' => 'ASC'), $id));
 		}
 		if ($id === null) {
-			$id = $this->obj->id;
+			$id = $this->_obj->id;
 		}
 		
 		$nodes = $this->children($id, true, $field, $order);
@@ -229,7 +229,7 @@ class Tree
 			return false;
 		}
 		if (empty ($id)) {
-			$id = $this->obj->id;
+			$id = $this->_obj->id;
 		}
 		
 		$node = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->getTable())->where($prop_id,$id)->execute()->current();
@@ -287,7 +287,7 @@ class Tree
 			return false;
 		}
 		if (empty ($id)) {
-			$id = $this->obj->id;
+			$id = $this->_obj->id;
 		}
 		
 		$node = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->getTable())->where($prop_id,$id)->execute()->current();
