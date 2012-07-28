@@ -28,11 +28,6 @@ class Tree
 		$this->_property = isset($props['property']) && is_array($props['property']) ? array_merge(static::$property, $props['property']) : static::$property ;
 	}
 	
-	protected function getTable()
-	{
-		return $this->_table;
-	}
-	
 	public function getParentNode($id = null) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		if (is_array($id)) {
@@ -42,10 +37,10 @@ class Tree
 			$id = $this->_obj->id;
 		}
 		
-		$node = \DB::select($prop_parent_id)->from($this->getTable())->where($prop_id,$id)->execute()->current();
+		$node = \DB::select($prop_parent_id)->from($this->_table)->where($prop_id,$id)->execute()->current();
 
 		if ($node) {
-			$parent = \DB::select()->from($this->getTable())->where($prop_id,$node[$prop_parent_id])->execute()->current();
+			$parent = \DB::select()->from($this->_table)->where($prop_id,$node[$prop_parent_id])->execute()->current();
 			return $parent;
 		}
 		return false;
@@ -70,32 +65,32 @@ class Tree
 		if ($direct) {
 			if($id === null) {
 				if($limit)
-					return \DB::select()->from($this->getTable())->where($prop_parent_id,null)->or_where($prop_parent_id,0)
+					return \DB::select()->from($this->_table)->where($prop_parent_id,null)->or_where($prop_parent_id,0)
 						->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
 				else
-					return \DB::select()->from($this->getTable())->where($prop_parent_id,null)->or_where($prop_parent_id,0)
+					return \DB::select()->from($this->_table)->where($prop_parent_id,null)->or_where($prop_parent_id,0)
 						->order_by($orderColumn, $orderDirection)->execute();
 			}
 			if($limit)
-				return \DB::select()->from($this->getTable())->where($prop_parent_id,$id)->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+				return \DB::select()->from($this->_table)->where($prop_parent_id,$id)->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
 			else
-				return \DB::select()->from($this->getTable())->where($prop_parent_id,$id)->order_by($orderColumn, $orderDirection)->execute();
+				return \DB::select()->from($this->_table)->where($prop_parent_id,$id)->order_by($orderColumn, $orderDirection)->execute();
 		}
 		if($id === null) {
 			if($limit)
-				return \DB::select()->from($this->getTable())->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+				return \DB::select()->from($this->_table)->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
 			else
-				return \DB::select()->from($this->getTable())->order_by($orderColumn, $orderDirection)->execute();
+				return \DB::select()->from($this->_table)->order_by($orderColumn, $orderDirection)->execute();
 		}
-		$node = \DB::select($prop_id,$prop_left,$prop_right)->from($this->getTable())->where($prop_id,$id)->execute()->current();
+		$node = \DB::select($prop_id,$prop_left,$prop_right)->from($this->_table)->where($prop_id,$id)->execute()->current();
 		if(!$node) {
 			return false;
 		}
 		if($limit)
-			return \DB::select()->from($this->getTable())->where($prop_left, '>',$node[$prop_left])->where($prop_right, '<',$node[$prop_right])
+			return \DB::select()->from($this->_table)->where($prop_left, '>',$node[$prop_left])->where($prop_right, '<',$node[$prop_right])
 				->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
 		else
-			return \DB::select()->from($this->getTable())->where($prop_left, '>',$node[$prop_left])->where($prop_right, '<',$node[$prop_right])
+			return \DB::select()->from($this->_table)->where($prop_left, '>',$node[$prop_left])->where($prop_right, '<',$node[$prop_right])
 				->order_by($orderColumn, $orderDirection)->execute();
 	}
 	
@@ -111,22 +106,22 @@ class Tree
 		}
 		if ($direct) {
 			if($id === null) {
-				$result = \DB::select(\DB::expr('COUNT(' . $prop_id . ')'))->from($this->getTable())
+				$result = \DB::select(\DB::expr('COUNT(' . $prop_id . ')'))->from($this->_table)
 					->where($prop_parent_id,null)->or_where($prop_parent_id,0)->execute()->current();
 				return (int)$result['COUNT(' . $prop_id . ')'];
 			}
-			$result = \DB::select(\DB::expr('COUNT(' . $prop_id . ')'))->from($this->getTable())->where($prop_parent_id,$id)->execute()->current();
+			$result = \DB::select(\DB::expr('COUNT(' . $prop_id . ')'))->from($this->_table)->where($prop_parent_id,$id)->execute()->current();
 			return (int)$result['COUNT(' . $prop_id . ')'];
 		}
 		if($id === null) {
-			$result = \DB::select(\DB::expr('COUNT(' . $prop_id . ')'))->from($this->getTable())->execute()->current();
+			$result = \DB::select(\DB::expr('COUNT(' . $prop_id . ')'))->from($this->_table)->execute()->current();
 			return (int)$result['COUNT(' . $prop_id . ')'];
 		}
-		$node = \DB::select($prop_id,$prop_left,$prop_right)->from($this->getTable())->where($prop_id,$id)->execute()->current();
+		$node = \DB::select($prop_id,$prop_left,$prop_right)->from($this->_table)->where($prop_id,$id)->execute()->current();
 		if(!$node) {
 			return false;
 		}
-		$result = \DB::select(\DB::expr('COUNT(' . $prop_id . ')'))->from($this->getTable())->where($prop_left, '>',$node[$prop_left])->where($prop_right, '<',$node[$prop_right])
+		$result = \DB::select(\DB::expr('COUNT(' . $prop_id . ')'))->from($this->_table)->where($prop_left, '>',$node[$prop_left])->where($prop_right, '<',$node[$prop_right])
 			->execute()->current();
 		return (int)$result['COUNT(' . $prop_id . ')'];
 	}
@@ -140,11 +135,11 @@ class Tree
 			$id = $this->_obj->id;
 		}
 
-		$node = \DB::select($prop_id,$prop_left,$prop_right)->from($this->getTable())->where($prop_id,$id)->execute()->current();
+		$node = \DB::select($prop_id,$prop_left,$prop_right)->from($this->_table)->where($prop_id,$id)->execute()->current();
 		if(!$node) {
 			return false;
 		}
-		return \DB::select()->from($this->getTable())->where($prop_left, '<=',$node[$prop_left])->where($prop_right, '>=',$node[$prop_right])
+		return \DB::select()->from($this->_table)->where($prop_left, '<=',$node[$prop_left])->where($prop_right, '>=',$node[$prop_right])
 			->order_by($prop_left, 'asc')->execute();
 	}
 	
@@ -183,11 +178,11 @@ class Tree
 		}
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		
-		$node1 = \DB::select($prop_id,$prop_left,$prop_right)->from($this->getTable())->where($prop_id,$id1)->execute()->current();
+		$node1 = \DB::select($prop_id,$prop_left,$prop_right)->from($this->_table)->where($prop_id,$id1)->execute()->current();
 		if(!$node1) {
 			return false;
 		}
-		$node2 = \DB::select($prop_id,$prop_left,$prop_right)->from($this->getTable())->where($prop_id,$id2)->execute()->current();
+		$node2 = \DB::select($prop_id,$prop_left,$prop_right)->from($this->_table)->where($prop_id,$id2)->execute()->current();
 		if(!$node2) {
 			return false;
 		}
@@ -206,7 +201,7 @@ class Tree
 			return false;
 		}
 		
-		$sql = 'UPDATE ' . $this->getTable() .
+		$sql = 'UPDATE ' . $this->_table .
 			' SET ' . $prop_left . ' = CASE WHEN ' . $prop_left . ' BETWEEN ' . $lft1 . ' AND ' . $rght1 . ' THEN ' . ($rght2 - $rght1) . ' + ' . $prop_left .
 			' WHEN ' . $prop_left . ' BETWEEN ' . $lft2 . ' AND ' . $rght2 . ' THEN ' . ($lft1 - $lft2) . ' + ' . $prop_left .
 			(($rght1 + 1) > ($lft2 - 1) ? '' : 
@@ -232,7 +227,7 @@ class Tree
 			$id = $this->_obj->id;
 		}
 		
-		$node = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->getTable())->where($prop_id,$id)->execute()->current();
+		$node = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->_table)->where($prop_id,$id)->execute()->current();
 		if(!$node) {
 			return false;
 		}
@@ -240,29 +235,29 @@ class Tree
 			$updateSet = array();
 			$updateSet[$prop_left] = ($this->_getMin() ?: 2) - 1;
 			$updateSet[$prop_right] = ($this->_getMax() ?: 1) + 1;
-			\DB::update($this->getTable())->set($updateSet)->where($prop_id, $node[$prop_id])->execute();
+			\DB::update($this->_table)->set($updateSet)->where($prop_id, $node[$prop_id])->execute();
 			return false;
 		}
 		
-		$parentNode = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->getTable())->where($prop_id,$node[$prop_parent_id])->execute()->current();
+		$parentNode = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->_table)->where($prop_id,$node[$prop_parent_id])->execute()->current();
 		if(!$parentNode) {
 			return false;
 		}
 		if(!$parentNode[$prop_right]) {
 			$this->moveDown($parentNode[$prop_id], true);
-			$parentNode = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->getTable())->where($prop_id,$node[$prop_parent_id])->execute()->current();
+			$parentNode = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->_table)->where($prop_id,$node[$prop_parent_id])->execute()->current();
 		}
 		if(!$node[$prop_right]){
 			$this->_insertLeafSpace($parentNode[$prop_right]);
 			$updateSet = array();
 			$updateSet[$prop_left] = $parentNode[$prop_right];
 			$updateSet[$prop_right] = $parentNode[$prop_right] + 1;
-			\DB::update($this->getTable())->set($updateSet)->where($prop_id, $node[$prop_id])->execute();
+			\DB::update($this->_table)->set($updateSet)->where($prop_id, $node[$prop_id])->execute();
 			return false;
 		}
 		
-		$moveToNode = \DB::select()->from($this->getTable())
-			->where($prop_left,\DB::expr('(SELECT MIN(' . $prop_left . ') FROM ' . $this->getTable() . ' WHERE ' . $prop_left . ' > ' . $node[$prop_right] . ' AND ' . $prop_right . ' < ' . $parentNode[$prop_right] . ')'))
+		$moveToNode = \DB::select()->from($this->_table)
+			->where($prop_left,\DB::expr('(SELECT MIN(' . $prop_left . ') FROM ' . $this->_table . ' WHERE ' . $prop_left . ' > ' . $node[$prop_right] . ' AND ' . $prop_right . ' < ' . $parentNode[$prop_right] . ')'))
 			->execute()->current();
 		if(!$moveToNode) {
 			return false;
@@ -290,7 +285,7 @@ class Tree
 			$id = $this->_obj->id;
 		}
 		
-		$node = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->getTable())->where($prop_id,$id)->execute()->current();
+		$node = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->_table)->where($prop_id,$id)->execute()->current();
 		if(!$node) {
 			return false;
 		}
@@ -298,29 +293,29 @@ class Tree
 			$updateSet = array();
 			$updateSet[$prop_left] = ($this->_getMin() ?: 2) - 1;
 			$updateSet[$prop_right] = ($this->_getMax() ?: 1) + 1;
-			\DB::update($this->getTable())->set($updateSet)->where($prop_id, $node[$prop_id])->execute();
+			\DB::update($this->_table)->set($updateSet)->where($prop_id, $node[$prop_id])->execute();
 			return false;
 		}
 		
-		$parentNode = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->getTable())->where($prop_id,$node[$prop_parent_id])->execute()->current();
+		$parentNode = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->_table)->where($prop_id,$node[$prop_parent_id])->execute()->current();
 		if(!$parentNode) {
 			return false;
 		}
 		if(!$parentNode[$prop_left]) {
 			$this->moveUp($parentNode[$prop_id], true);
-			$parentNode = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->getTable())->where($prop_id,$node[$prop_parent_id])->execute()->current();
+			$parentNode = \DB::select($prop_id,$prop_left,$prop_right,$prop_parent_id)->from($this->_table)->where($prop_id,$node[$prop_parent_id])->execute()->current();
 		}
 		if(!$node[$prop_right]){
 			$this->_insertLeafSpace($parentNode[$prop_left] + 1);
 			$updateSet = array();
 			$updateSet[$prop_left] = $parentNode[$prop_left] + 1;
 			$updateSet[$prop_right] = $parentNode[$prop_left] + 2;
-			\DB::update($this->getTable())->set($updateSet)->where($prop_id, $node[$prop_id])->execute();
+			\DB::update($this->_table)->set($updateSet)->where($prop_id, $node[$prop_id])->execute();
 			return false;
 		}
 		
-		$moveToNode = \DB::select()->from($this->getTable())
-			->where($prop_right,\DB::expr('(SELECT MAX(' . $prop_right . ') FROM ' . $this->getTable() . ' WHERE ' . $prop_right . ' < ' . $node[$prop_left] . ' AND ' . $prop_left . ' > ' . $parentNode[$prop_left] . ')'))
+		$moveToNode = \DB::select()->from($this->_table)
+			->where($prop_right,\DB::expr('(SELECT MAX(' . $prop_right . ') FROM ' . $this->_table . ' WHERE ' . $prop_right . ' < ' . $node[$prop_left] . ' AND ' . $prop_left . ' > ' . $parentNode[$prop_left] . ')'))
 			->execute()->current();
 		if(!$moveToNode) {
 			return false;
@@ -338,7 +333,7 @@ class Tree
 
 	protected function _insertLeafSpace($parentRight) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
-		$sql = 'UPDATE ' . $this->getTable() . ' SET ' . $prop_left . ' = CASE WHEN ' . $prop_left . ' > ' . $parentRight .
+		$sql = 'UPDATE ' . $this->_table . ' SET ' . $prop_left . ' = CASE WHEN ' . $prop_left . ' > ' . $parentRight .
 			' THEN ' . $prop_left . ' + 2 ELSE ' . $prop_left . ' END, ' . $prop_right . ' = CASE WHEN ' . $prop_right . ' >= ' . $parentRight .
 			' THEN ' . $prop_right . ' + 2 ELSE ' . $prop_right . ' END WHERE ' . $prop_right . ' >= ' . $parentRight;
 		\DB::query($sql)->execute();
@@ -346,13 +341,13 @@ class Tree
 
 	protected function _getMax() {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
-		$result = \DB::select(\DB::expr('max(' . $prop_right . ')'))->from($this->getTable())->execute()->current();
+		$result = \DB::select(\DB::expr('max(' . $prop_right . ')'))->from($this->_table)->execute()->current();
 		return (empty($result[$prop_right])) ? 0 : $result[$prop_right];
 	}
 
 	protected function _getMin() {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
-		$result = \DB::select(\DB::expr('min(' . $prop_left . ')'))->from($this->getTable())->execute()->current();
+		$result = \DB::select(\DB::expr('min(' . $prop_left . ')'))->from($this->_table)->execute()->current();
 		return (empty($result[$prop_left])) ? 0 : $result[$prop_left];
 	}
 }
