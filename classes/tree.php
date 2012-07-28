@@ -32,12 +32,25 @@ class Tree
 		return $this->_table;
 	}
 	
-	public function children($id = null, $direct = false, $orderColumn = null, $orderDirection = null, $limit = null) {
+	public function getParentNode($id = null) {
 		if (is_array($id)) {
 			extract (array_merge(array('id' => null), $id));
 		}
-		if (!$number) {
-			return false;
+		if (empty ($id)) {
+			$id = $this->obj->id;
+		}
+		$node = \DB::select('parent_id')->from($this->getTable())->where('id',$id)->execute()->current();
+
+		if ($node) {
+			$parent = \DB::select()->from($this->getTable())->where('id',$node['parent_id'])->execute()->current();
+			return $parent;
+		}
+		return false;
+	}
+
+	public function children($id = null, $direct = false, $orderColumn = null, $orderDirection = null, $limit = null) {
+		if (is_array($id)) {
+			extract (array_merge(array('id' => null), $id));
 		}
 		if (empty ($id)) {
 			$id = $this->obj->id;
@@ -49,16 +62,43 @@ class Tree
 			$orderDirection = 'ASC';
 		}
 		if ($direct) {
-			return \DB::select()->from($this->getTable())->where('parent_id',$id)->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+			if($limit)
+				return \DB::select()->from($this->getTable())->where('parent_id',$id)->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+			else
+				return \DB::select()->from($this->getTable())->where('parent_id',$id)->order_by($orderColumn, $orderDirection)->execute();
 		}
 		$node = \DB::select('id','lft','rght')->from($this->getTable())->where('id',$id)->execute()->current();
 		if(!$node) {
 			return false;
 		}
-		return \DB::select()->from($this->getTable())->where('lft', '>',$node['lft'])->where('rght', '<',$node['rght'])
-			->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+		if($limit)
+			return \DB::select()->from($this->getTable())->where('lft', '>',$node['lft'])->where('rght', '<',$node['rght'])
+				->order_by($orderColumn, $orderDirection)->limit($limit)->execute();
+		else
+			return \DB::select()->from($this->getTable())->where('lft', '>',$node['lft'])->where('rght', '<',$node['rght'])
+				->order_by($orderColumn, $orderDirection)->execute();
 	}
 	
+	public function childCount($id = null, $direct = false) {
+		if (is_array($id)) {
+			extract (array_merge(array('id' => null), $id));
+		}
+		if (empty ($id)) {
+			$id = $this->obj->id;
+		}
+		if ($direct) {
+			$result = \DB::select(\DB::expr('COUNT(id)'))->from($this->getTable())->where('parent_id',$id)->execute()->current();
+			return (int)$result['COUNT(id)'];
+		}
+		$node = \DB::select('id','lft','rght')->from($this->getTable())->where('id',$id)->execute()->current();
+		if(!$node) {
+			return false;
+		}
+		$result = \DB::select(\DB::expr('COUNT(id)'))->from($this->getTable())->where('lft', '>',$node['lft'])->where('rght', '<',$node['rght'])
+			->execute()->current();
+		return (int)$result['COUNT(id)'];
+	}
+
 	/*
 	 * - 'id' id of record to use as top node for reordering
 	 * - 'field' Which field to use in reordering defaults to id
