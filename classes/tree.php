@@ -99,6 +99,22 @@ class Tree
 		return (int)$result['COUNT(id)'];
 	}
 
+	public function getPath($id = null) {
+		if (is_array($id)) {
+			extract (array_merge(array('id' => null), $id));
+		}
+		if (empty ($id)) {
+			$id = $this->obj->id;
+		}
+
+		$node = \DB::select('id','lft','rght')->from($this->getTable())->where('id',$id)->execute()->current();
+		if(!$node) {
+			return false;
+		}
+		return \DB::select()->from($this->getTable())->where('lft', '<=',$node['lft'])->where('rght', '>=',$node['rght'])
+			->order_by('lft', 'asc')->execute();
+	}
+	
 	/*
 	 * - 'id' id of record to use as top node for reordering
 	 * - 'field' Which field to use in reordering defaults to id
