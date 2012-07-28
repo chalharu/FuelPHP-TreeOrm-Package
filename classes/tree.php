@@ -227,9 +227,15 @@ class Tree
 		if(!$node) {
 			return false;
 		}
+		if(!$node['rght']) {
+			return false;
+		}
 		
 		$parentNode = \DB::select('id','lft','rght','parent_id')->from($this->getTable())->where('id',$node['parent_id'])->execute()->current();
 		if(!$parentNode) {
+			return false;
+		}
+		if(!$parentNode['rght']) {
 			return false;
 		}
 		
@@ -263,9 +269,15 @@ class Tree
 		if(!$node) {
 			return false;
 		}
+		if(!$node['lft']) {
+			return false;
+		}
 		
 		$parentNode = \DB::select('id','lft','rght','parent_id')->from($this->getTable())->where('id',$node['parent_id'])->execute()->current();
 		if(!$parentNode) {
+			return false;
+		}
+		if(!$parentNode['lft']) {
 			return false;
 		}
 		
