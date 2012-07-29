@@ -446,4 +446,17 @@ class Tree
 		$result = \DB::select(\DB::expr('min(' . $prop_left . ')'))->from($this->_table)->execute()->current();
 		return (empty($result[$prop_left])) ? 0 : $result[$prop_left];
 	}
+
+	/**
+	 * ノードの添字振りなおし
+	 */
+	public function reset() {
+		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
+		$sql = 'UPDATE ' . $this->_table .
+			' SET ' . $prop_left . ' = (SELECT COUNT(*) FROM (SELECT ' . $prop_left . ' as seq FROM ' . $this->_table .
+			' UNION ALL SELECT ' . $prop_right . ' as seq FROM ' . $this->_table . ') as LftRgt WHERE seq <= ' . $prop_left . '), ' .
+			$prop_right . ' = (SELECT COUNT(*) FROM (SELECT ' . $prop_left . ' as seq FROM ' . $this->_table .
+			' UNION ALL SELECT ' . $prop_right . ' as seq FROM ' . $this->_table . ') as LftRgt WHERE seq <= ' . $prop_right . ')';
+		\DB::query($sql)->execute();
+	}
 }
