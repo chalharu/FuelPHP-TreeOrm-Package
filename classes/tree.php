@@ -1,13 +1,47 @@
 <?php
+/**
+ * Tree Orm
+ *
+ * @package	fuel-treeorm
+ * @version	0.1
+ * @author	chalharu
+ * @license	MIT License
+ * @copyright	Copyright 2012, chalharu
+ * @link	http://chrysolite.hatenablog.com/
+ */
+
 namespace TreeOrm;
 
+/**
+ * Tree class
+ */
 class Tree
 {
+	/**
+	 * @var	\Orm\Model	モデルインスタンス
+	 */
 	protected $_obj;
+
+	/**
+	 * @var	string	テーブル名
+	 */
 	protected $_table;
+
+	/**
+	 * @var	array	ツリー構造に必要なキー及び名前
+	 */
 	protected $_property;
+
+	/**
+	 * @var	array	ツリー構造に必要なキー及び名前のデフォルト値
+	 */
 	public static $property = array( 'left' => 'lft', 'right' => 'rght', 'parent_id' => 'parent_id', 'id' => 'id');
-	
+
+	/**
+	 * インスタンスの生成
+	 * @param	mixed	$model	モデル名もしくは\Orm\Modelのインスタンス
+	 * @return	Tree
+	 */
 	public static function forge($model = null)
 	{
 		if(is_object($model)){
@@ -19,7 +53,11 @@ class Tree
 		}
 		return new static($obj);
 	}
-	
+
+	/**
+	 * Constructor
+	 * @param  \Orm\Model
+	 */
 	public function __construct(\Orm\Model $obj)
 	{
 		$this->_obj = $obj;
@@ -27,7 +65,12 @@ class Tree
 		$props = call_user_func(get_class($obj) . '::observers', 'TreeOrm\\Observer_Tree');
 		$this->_property = isset($props['property']) && is_array($props['property']) ? array_merge(static::$property, $props['property']) : static::$property ;
 	}
-	
+
+	/**
+	 * 親ノードの取得
+	 * @param	int	$id	主キー
+	 * @return	array|boolean	親ノードが存在すればその配列、存在しなければfalseを返す
+	 */
 	public function getParentNode($id = null) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		if (is_array($id)) {
@@ -46,6 +89,15 @@ class Tree
 		return false;
 	}
 
+	/**
+	 * 子ノードの取得
+	 * @param	int	$id	主キーもしくは、パラメータの連想配列
+	 * @param	boolean	$direct	直下の子のみを対象とするか
+	 * @param	string	$orderColumn	ソートカラム名
+	 * @param	string	$orderDirection	ソート方向(ASC|DESC)
+	 * @param	int	$limit	取得最大数
+	 * @return	array|boolean	元のノードが存在していれば子ノードの配列、存在していなければfalseを返す
+	 */
 	public function children($id = null, $direct = false, $orderColumn = null, $orderDirection = null, $limit = null) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		if (is_array($id)) {
@@ -94,6 +146,12 @@ class Tree
 				->order_by($orderColumn, $orderDirection)->execute();
 	}
 	
+	/**
+	 * 子ノード数の取得
+	 * @param	int	$id	主キーもしくは、パラメータの連想配列
+	 * @param	boolean	$direct	直下の子のみを対象とするか
+	 * @return	int|boolean	元のノードが存在していれば子ノード数、存在していなければfalseを返す
+	 */
 	public function childCount($id = null, $direct = false) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		if (is_array($id)) {
@@ -126,6 +184,11 @@ class Tree
 		return (int)$result['COUNT(' . $prop_id . ')'];
 	}
 
+	/**
+	 * パスの取得
+	 * @param	int	$id	対象ノードのキー
+	 * @return	array|boolean	元のノードが存在していればルートから順番に配列として、存在していなければfalseを返す
+	 */
 	public function getPath($id = null) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		if (is_array($id)) {
@@ -142,11 +205,12 @@ class Tree
 		return \DB::select()->from($this->_table)->where($prop_left, '<=',$node[$prop_left])->where($prop_right, '>=',$node[$prop_right])
 			->order_by($prop_left, 'asc')->execute();
 	}
-	
-	/*
-	 * - 'id' id of record to use as top node for reordering
-	 * - 'field' Which field to use in reordering defaults to id
-	 * - 'order' Direction to order either DESC or ASC (defaults to ASC)
+
+	/**
+	 * ノードの再配置
+	 * @param	int	$id	対象ノードのキーもしくは、パラメータの連想配列
+	 * @param	string	$field	ソートカラム名
+	 * @param	string	$order	ソート方向(ASC|DESC)
 	 */
 	public function reorder($id = null, $field = null, $order = 'ASC') {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
@@ -169,6 +233,12 @@ class Tree
 		}
 	}
 
+	/**
+	 * ノードの入れ替え
+	 * @param	int	$id1	対象ノード1のキー
+	 * @param	int	$id2	対象ノード2のキー
+	 * @return	boolean	成功したかどうか
+	 */
 	public function change($id1 = null, $id2 = null) {
 		if (!$id1) {
 			return false;
@@ -212,9 +282,15 @@ class Tree
 				(' WHEN ' . $prop_right . ' BETWEEN ' . ($rght1 + 1) . ' AND ' . ($lft2 - 1) . ' THEN ' . ($lft1 + $rght2 - $rght1 - $lft2) . ' + ' . $prop_right )) .
 			' ELSE ' . $prop_right . ' END WHERE ' . $prop_left . ' BETWEEN ' . $lft1 . ' AND ' . $rght2;
  		\DB::query($sql)->execute();
-		
+		return true;
 	}
 
+	/**
+	 * ノードの同じ階層の中で位置を下げる
+	 * @param	int	$id	対象ノードのキー
+	 * @param	int|boolean	$number	移動回数、TRUEを指定した場合、端まで移動
+	 * @return	boolean	成功したかどうか
+	 */
 	public function moveDown($id = null, $number = 1) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		if (is_array($id)) {
@@ -271,8 +347,15 @@ class Tree
 		if ($number) {
 			$this->moveDown($id, $number);
 		}
+		return true;
 	}
 
+	/**
+	 * ノードの同じ階層の中で位置を上げる
+	 * @param	int	$id	対象ノードのキー
+	 * @param	int|boolean	$number	移動回数、TRUEを指定した場合、端まで移動
+	 * @return	boolean	成功したかどうか
+	 */
 	public function moveUp($id = null, $number = 1) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		if (is_array($id)) {
@@ -329,8 +412,13 @@ class Tree
 		if ($number) {
 			$this->moveUp($id, $number);
 		}
+		return true;
 	}
 
+	/**
+	 * 指定の場所にノードを追加するスペースを作る
+	 * @param	int	$parentRight	対象位置
+	 */
 	protected function _insertLeafSpace($parentRight) {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		$sql = 'UPDATE ' . $this->_table . ' SET ' . $prop_left . ' = CASE WHEN ' . $prop_left . ' > ' . $parentRight .
@@ -339,12 +427,20 @@ class Tree
 		\DB::query($sql)->execute();
 	}
 
+	/**
+	 * ノードの右端を取得
+	 * @return	int	rghtの最大値
+	 */
 	protected function _getMax() {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		$result = \DB::select(\DB::expr('max(' . $prop_right . ')'))->from($this->_table)->execute()->current();
 		return (empty($result[$prop_right])) ? 0 : $result[$prop_right];
 	}
 
+	/**
+	 * ノードの左端を取得
+	 * @return	int	lftの最小値
+	 */
 	protected function _getMin() {
 		extract($this->_property, EXTR_PREFIX_ALL, 'prop');
 		$result = \DB::select(\DB::expr('min(' . $prop_left . ')'))->from($this->_table)->execute()->current();

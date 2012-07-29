@@ -1,36 +1,89 @@
 <?php
+/**
+ * Tree Orm
+ *
+ * @package	fuel-treeorm
+ * @version	0.1
+ * @author	chalharu
+ * @license	MIT License
+ * @copyright	Copyright 2012, chalharu
+ * @link	http://chrysolite.hatenablog.com/
+ */
+
 namespace TreeOrm;
 
+/**
+ * Observer_Tree class
+ */
 class Observer_Tree extends \Orm\Observer
 {
+	/**
+	 * @var	array	ツリー構造に必要なキー及び名前のデフォルト値
+	 */
 	public static $property = array( 'left' => 'lft', 'right' => 'rght', 'parent_id' => 'parent_id', 'id' => 'id');
+
+	/**
+	 * @var	array	ツリー構造に必要なキー及び名前
+	 */
 	protected $_property;
+
+	/**
+	 * @var	string	テーブル名
+	 */
 	protected $_table;
+
+	/**
+	 * @var	array	親ノード
+	 */
 	protected $_parentNode;
 
+	/**
+	 * Constructor
+	 */
 	public function __construct($class)
 	{
 		$props = $class::observers(get_class($this));
 		$this->_property = isset($props['property']) && is_array($props['property']) ? array_merge(static::$property,$props['property']) : static::$property ;
 	}
 
+	/**
+	 * テーブル名の取得
+	 * @param	\Orm\Model	$obj	Modelインスタンス
+	 * @return	string	テーブル名
+	 */
 	protected function getTable(\Orm\Model $obj)
 	{
 		$this->_table = call_user_func(get_class($obj).'::table');
 		return $this->_table;
 	}
 
+	/**
+	 * 親ノードの取得
+	 * @param	\Orm\Model	$obj	Modelインスタンス
+	 * @return	array	親ノードの配列
+	 */
 	protected function getParentNode(\Orm\Model $obj)
 	{
 		$this->_parentNode = $this->getNode($obj, $obj->{$this->_property['parent_id']});
 		return $this->_parentNode;
 	}
 
+	/**
+	 * ノードの取得
+	 * @param	\Orm\Model	$obj	Modelインスタンス
+	 * @param	int	$id	ノードのキー
+	 * @return	array	ノードの配列
+	 */
 	protected function getNode(\Orm\Model $obj, $id)
 	{
 		return \DB::select()->from($this->getTable($obj))->where($this->_property['id'], $id)->execute()->current();
 	}
 
+	/**
+	 * テーブルが空かどうか
+	 * @param	\Orm\Model	$obj	Modelインスタンス
+	 * @return	boolean	テーブルが空ならTRUE、そうでなければFALSE
+	 */
 	protected function isTableEmpty(\Orm\Model $obj)
 	{
 		$nodeCount = $obj->query()->count();
